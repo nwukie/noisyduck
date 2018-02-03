@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # 15-point Dispersion Relation Preserving Filter
 def drp15(f):
     """ 15-point DRP filter from "Computational Aeroacoustics", Tam. Strongly
@@ -49,4 +48,59 @@ def drp15(f):
     return f_tilde
 
 
+
+
+def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic'):
+    """ Procedure for filtering/sorting eigenvectors into physical categories.
+    Generally, we are trying to determine if a given eigenvector is a convected
+    wave, an upstream/downstream traveling acoustic wave, or a spurious mode.
+    """
+
+    # Determine resolution
+    res = len(r)
+
+    # Separate eigenvectors into primitive variables
+    rho_eigenvectors = eigenvectors[0*res:1*res,:]
+    u_eigenvectors   = eigenvectors[1*res:2*res,:]
+    v_eigenvectors   = eigenvectors[2*res:3*res,:]
+    w_eigenvectors   = eigenvectors[3*res:4*res,:]
+    p_eigenvectors   = eigenvectors[4*res:5*res,:]
+
+    if (filters == 'acoustic'):
+        # Work with pressure component of eigenvectors
+        # Create separate copy so we can compare before/after modes
+        pr_eigenvectors   = np.copy(np.real(p_eigenvectors))
+        pr_eigenvectors_f = np.copy(pr_eigenvectors)
+
+        # Call filter for each eigenvector
+        for i in range(pr_eigenvectors.shape[1]):
+            pr_eigenvectors_f[:,i] = drp15(pr_eigenvectors[:,i])
+
+        # Select low-wavenumber modes based on the ratio of their vector norms
+        amp   = np.zeros(pr_eigenvectors.shape[1])
+        amp_f = np.zeros(pr_eigenvectors.shape[1])
+        for i in range(pr_eigenvectors.shape[1]):
+            for j in range(len(r)-1):
+                amp[i]   = amp[i]   + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors[  j,i]*pr_eigenvectors[  j,i]  +  r[j+1]*pr_eigenvectors[  j+1,i]*pr_eigenvectors[  j+1,i])
+                amp_f[i] = amp_f[i] + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors_f[j,i]*pr_eigenvectors_f[j,i]  +  r[j+1]*pr_eigenvectors_f[j+1,i]*pr_eigenvectors_f[j+1,i])
+
+        # Compute selection criteria
+        alpha = amp_f/amp
+
+        # Flag eigenvectors that satisfy criteria
+        keep = []
+        for i in range(len(alpha)):
+            if (alpha[i] < alpha_cutoff):
+                keep[len(keep):] = [i]
+
+        # Consolidate eigenvalues/eigenvectors flagged to pass the filter
+        nmodes = len(keep)
+        eigenvalues_f  = np.zeros([nmodes],       dtype=np.complex)
+        eigenvectors_f = np.zeros([5*res,nmodes], dtype=np.complex)
+        for i in range(nmodes):
+            eigenvalues_f[i]    = eigenvalues[keep[i]]
+            eigenvectors_f[:,i] = eigenvectors[:,keep[i]]
+
+        return eigenvalues_f, eigenvectors_f
+        
 

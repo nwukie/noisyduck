@@ -1,22 +1,39 @@
-Welcome to Noisy Duck's documentation!
-======================================
+.. include:: ../README.rst
 
-Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
+   :hidden:
 
    readme
    installation
    usage
-   modules
    contributing
    authors
    history
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+
+.. Welcome to Noisy Duck's documentation!
+.. ======================================
+.. 
+.. Contents:
+..  
+.. .. toctree::
+..    :maxdepth: 4
+..    :hidden:
+.. 
+..    readme
+..    installation
+..    usage
+..    contributing
+..    authors
+..    history
+.. 
+.. Indices and tables
+.. ==================
+.. 
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`

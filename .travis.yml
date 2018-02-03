@@ -6,15 +6,18 @@ deploy:
     tags: true
   distributions: sdist bdist_wheel
   password:
-    secure: VPAeZxgFcAY8grNLtkHFJAEryp8en6CmrSEskmNvhE2t9s4xQD6Elo3th3hxKtxq8/1wxUxPOktFPRHi0pO9NazJZcirwvFV8Wmt00LLuSL6I5jvuoP8gHvb1FSZXw/M8rRiQdS0DIk+XIdYmkXRwDE3+3dEjFaRcdb2bPp+UMWRfb/L4vkst6XXFh3Zz4kPX838VsVpUmEqmpSmM+MFtethICJSQqywuQHxSbyXpBSHlljH2SBkT1DmwKdO0J9sZCYEKRtPtxm0Xr8w+oOvsisTp+K95Hs6bF9y08W7oBHdk35R/XC2mGEdLsNgMKEQQ8dqwVx9p/z9uVF47++h6GWJRsuS2PsrDEYxmQvdHOGOED9vhkZ5pQUpyqb8hI4hSW0bKwfrN60l5dSxz25LS4i6CafxJdIpsNqb39wOW3FGWo7gBq7oakLwYNidtb+AFhSRjkjtDM00rI04+x0lpC0NmA6vU2prW/cAJLxRmduAQwFG2SxC+RQd52BBkRWKPbvU4LszZHvEfEb4M/Qf2rMTZpf9HjxYbqpezLmu7xjkGFj8cTuZlN5TU1h1oTRp10fysMIeR+GMthMAOaPUktF+8lAf/RTGOFe+Vj5TRPPYycjknCLjRv83DVICN1A/9tiaHY9AYL7/0yZMUMw+bneRQzj//YDu4Tbq/hNKhHA=
+    secure: NnyVPIYuSg9dmMV+kXupKZh5lSTyQ5b39agybgZ+uxNgFa1GI9kBHP0kwAdP3HG6JKjzXC5yzL9imKsnH5MiuJUl7trae2bQFfzeB/mgbIbMe7o9biaWNHWp6CMMRKQXvCMrSfeQFG5tuMzDLY8NESUiR4AXNGT0MCRj7IK3lT7vKU97zH2wszVAyysp0URz9WdMAxmdAjjSjADQdEeGOa1nkDU2QyNkLd7Th5athNrkR7xEwlwVz0SiD0nymOY9HOtgN2zfYiMYAW1TnRIycKs3drkuxjUeQLMQ3CtJEUmT7ngmrMNEIwAecNfRuYC3KE41MJntBrZ3+C4wgZo+BiwxITvFTC600UoMztBQYsjGtyKKj0eEa1rF7rJ5Ckcs8Wdn3k3hDZ6XuJDGP4X6uV1v+xZCoGICwZDH0r3FdUVZHDs/Nqe5XStKPHEBFJpfm+TLSB9L4CsGA99aahv/M+8bZNnksnA2a3WieaZlKpW22UV7R1ZBw7+Mz4Tzfuiaqo3RWAcfAaAjiMLgj0QmSD5UscMb+46ZKKfeH6PsHqSNHVozhilI0g9RFN5wv+FFrvUNO+zxMB3cdj/sJjIO7xIHNn01a5cUf1OjKNtobxUTWGJj5u7jF43HY13+t6FPE8xb4zvo3iU0FOYhzJZa7vbmA5Kb8ju9Tebw238g6yU=
   provider: pypi
   user: nwukie
 install: pip install -U tox-travis
 language: python
+#python:
+#- 3.5
+#- 3.4
+#- 3.3
+#- 2.7
+#- 2.6
 python:
 - 3.5
-- 3.4
-- 3.3
 - 2.7
-- 2.6
 script: tox

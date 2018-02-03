@@ -28,7 +28,8 @@ A python tool for computing eigenmode decompositions of duct flows.
 Features
 --------
 
-* TODO
+    - Annular duct mode decomposition
+
 
 Credits
 ---------

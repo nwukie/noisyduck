@@ -1,5 +1,37 @@
+# -*- coding: utf-8 -*-
+r""" 
+Numerical
+---------
+
+This module provides a functionality for computing the numerical eigenvalue/eigenvector
+decomposition of a uniform axial flow in an annular cylindrical duct. The decomposition
+is based on a normal mode analysis of the three-dimensional linearized Euler equations,
+which yields an eigensystem that is discretized and solved numerically.
+
+
+Theory:
+~~~~~~~
+
+
+
+Filtering:
+~~~~~~~~~~
+
+
+
+Example:
+~~~~~~~~
+
+::
+    
+    eigenvalues, eigenvectors, r = noisyduck.annulus.numerical.decomposition(omega,m,ri,ro,rho,u,v,w,p,gam)
+
+"""
+
+
 import numpy as np
 import scipy
+import noisyduck.filter
 
 
 
@@ -7,19 +39,75 @@ import scipy
 
 
 
-def eigen_decomposition(m,omega,ri,ro,rho,u,v,w,p,gam):
+def decomposition(omega,m,ri,ro,rho,u,v,w,p,gam,res=50,filter='None',alpha=0.00001):
     """ Compute the numerical eigen-decomposition of the three-dimensional linearized
     Euler equations for a cylindrical annulus.
 
     Args:
-        m: circumferential wavenumber
-        n: number of radial eigenmodes to retain
-        omega: temporal frequency
-        ri: inner radius
-        ro: outer radius
+        omega (float): temporal frequency
+        m (int): circumferential wavenumber
+        ri (float): inner radius
+        ro (float): outer radius
+        rho (float): mean density
+        u (float): mean radial velocity
+        v (float): mean tangential velocity
+        w (float): mean axial velocity
+        p (float): mean pressure
+        gam (float): ratio of specific heats
+
+    Returns:
+        (eigenvalues, eigenvectors, r): a tuple containing an array of eigenvalues, an array of eigenvectors evaluated at radial locations, and an array of those radial locations.
 
     """
 
+    # Construct eigensystem
+    M, N, r = construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam)
+
+    # Solve Generalized Eigenvalue Problem for complex, nonhermitian system
+    eigenvalues, eigenvectors = scipy.linalg.eig(M,N,right=True,overwrite_a=True,overwrite_b=True)
+    
+    # Add radial velocity end points back where they were removed due to boundary conditions
+    eigenvectors = np.insert(eigenvectors, [res]    , [0.] ,axis=0)
+    eigenvectors = np.insert(eigenvectors, [2*res-1], [0.] ,axis=0)
+
+
+
+
+    if (filter == 'acoustic'):
+        eigenvalues, eigenvectors = noisyduck.filter.physical(eigenvalues,eigenvectors,r,alpha_cutoff=alpha,filters=filter)
+
+
+    return eigenvalues, eigenvectors, r
+
+
+    
+
+
+def construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam):
+    """ Constructs the numerical representation of the eigenvalue problem associated
+    with the three-dimensional linearized euler equations subjected to a normal mode
+    analysis.
+
+    NOTE: a small imaginary part is added to the temporal frequency to facilitate 
+    determining the propagation direction of eigenmodes based on the sign of the 
+    imaginary part of their eigenvalue.
+
+    Args:
+        omega (float): temporal frequency.
+        m (int): circumferential wavenumber.
+        ri (float): inner radius for circular annulus.
+        ro (float): outer radius for circular annulus.
+        res (int): number of points to use to discretize the eigensystem.
+        rho (float): mean density.
+        u (float): mean radial velocity.
+        v (float): mean tangential velocity.
+        w (float): mean axial velocity.
+        p (float): mean pressure.
+        gam (float): ratio of specific heats.
+
+    Returns:
+        (M, N, r): left-hand side of generalized eigenvalue problem, right-hand side of generalized eigenvalue problem, and radial coordinates of the discretization.
+    """
 
     # Define real/imag parts for temporal frequency
     romega = omega
@@ -27,7 +115,6 @@ def eigen_decomposition(m,omega,ri,ro,rho,u,v,w,p,gam):
 
 
     # Define geometry and discretization
-    res = 50
     dr = (ro-ri)/(res-1)
     nfields = 5
     r = np.linspace(ri,ro,res)
@@ -277,28 +364,9 @@ def eigen_decomposition(m,omega,ri,ro,rho,u,v,w,p,gam):
     
     # Move N to right-hand side
     N = -N
-    
-    # Solve Generalized Eigenvalue Problem for complex, nonhermitian system
-    eigenvalues, eigenvectors = scipy.linalg.eig(M,N,right=True,overwrite_a=True,overwrite_b=True)
-    
-    # Add radial velocity end points back
-    eigenvectors = np.insert(eigenvectors, [res]    , [0.] ,axis=0)
-    eigenvectors = np.insert(eigenvectors, [2*res-1], [0.] ,axis=0)
-    
-    return eigenvalues, eigenvectors
 
 
-
-
-
-
-
-
-
-
-
-
-
+    return M, N, r
 
 
 
