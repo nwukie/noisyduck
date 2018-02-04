@@ -4,7 +4,7 @@
 
 __author__ = """Nathan Wukie"""
 __email__ = 'nathan.wukie@gmail.com'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 from . import annulus
 from . import filter
