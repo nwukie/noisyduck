@@ -1,9 +1,8 @@
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib       import rc, rcParams
+from matplotlib import rc, rcParams
 import noisyduck as nd
-#import noisyduck.annulus
 
 
 # Define mean state
