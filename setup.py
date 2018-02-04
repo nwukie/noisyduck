@@ -49,7 +49,8 @@ setup(
     author="Nathan Wukie",
     author_email='nathan.wukie@gmail.com',
     url='https://github.com/nwukie/noisyduck',
-    packages=find_packages(include=['noisyduck']),
+    #packages=find_packages(include=['noisyduck']),
+    packages=find_packages(),
     entry_points={
         'console_scripts': [
             'noisyduck=noisyduck.cli:main'
