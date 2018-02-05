@@ -6,7 +6,8 @@ Analytical
 This module provides a functionality for computing the eigenvalue/eigenvector
 decomposition of a uniform axial flow in an annular cylindrical duct. The decomposition
 is based on an analytical solution of the convected wave equation for pressure, 
-yielding the acoustic part of the eigen decomposition.
+yielding the acoustic part of the eigen decomposition. The eigenvectors from this 
+decomposition correspond specifically to the acoustic pressure disturbance.
 
 
 Theory:
@@ -22,7 +23,7 @@ For a uniform axial mean, linear pressure perturbations satisfy the convected wa
 
 
 where :math:`M` is the Mach number of the axial mean flow and :math:`r` has been normalized
-by the outer duct radius. Boundary conditions for a hardwalled duct imply zero radial 
+by the outer duct radius. Boundary conditions for a hard-walled duct imply zero radial 
 velocity, which is imposed using the condition
 
 
@@ -84,27 +85,36 @@ import scipy.optimize as op
 
 def decomposition(omega,m,mach,ri,ro,n):
     """ This procedure computes the analytical eigen-decomposition of 
-    the convected wave equation.
+    the convected wave equation. The eigenvectors returned correspond specifically
+    with acoustic pressure perturbations.
 
     Args:
-    omega (float): temporal wave number.
-    m (int): circumferential wave number.
-    mach (float): Mach number.
-    ri (float): inner radius.
-    ro (float): outer radius.
-    n (int): number of eigenvalues/eigenvectors to compute.
+        omega (float): temporal wave number.
+        m (int): circumferential wave number.
+        mach (float): Mach number.
+        ri (float): inner radius.
+        ro (float): outer radius.
+        n (int): number of eigenvalues/eigenvectors to compute.
 
     Returns:
         (eigenvalues, eigenvectors, r): a tuple containing an array of eigenvalues, an array of eigenvectors evaluated at radial locations, and an array of those radial locations.
 
     """
 
-    eigenvalues = compute_eigenvalues(omega,m,mach,ri,ro,n)
+    if (n % 2 != 0):
+        print('WARNING: number of eigenvalues to find should be divisible by two.')
+
+    # Compute zeros for determinant of solution to convected wave equation
+    # Then use zeros to compute the axial wavenumbers(eigenvalues)
+    nzeros = int(n/2)
+    zeros = compute_zeros(m,mach,ri,ro,nzeros)
+    eigenvalues = compute_eigenvalues(omega,mach,zeros)
 
     r = np.linspace(ri,ro,100)
     eigenvectors = np.zeros((100,n))
-    for i in range(n):
-        eigenvectors[:,i] = compute_eigenvector(r,(ri/ro),m,omega)
+    for i in range(len(zeros)):
+        eigenvectors[:,2*i  ] = compute_eigenvector(r,(ri/ro),m,zeros[i])
+        eigenvectors[:,2*i+1] = compute_eigenvector(r,(ri/ro),m,zeros[i])
 
     return eigenvalues, eigenvectors, r
 
@@ -116,9 +126,27 @@ def eigensystem(b,m,ri,ro):
     convected wave equation. The location of the zeros for this function 
     correspond to the eigenvalues for the convected wave equation.
 
+    The solution to the Bessel equation with boundary conditions applied
+    yields a system of two linear equations.
     .. math::
 
-        f = J_m(b*ri)*Y_m(b*ro)  -  J_m(b*ro)*Y_m(b*ri) 
+        A x = 
+        \begin{bmatrix}
+            J'_m(\mu \lambda)   &   Y'_m(\mu \lambda) \\
+            J'_m(\mu)           &   Y'_m(\mu)
+        \end{bmatrix}
+        \begin{bmatrix}
+            x_1 \\ x_2
+        \end{bmatrix}
+        = 0
+
+    This procedure evaluates the function
+    .. math::
+
+        det(A) = f(b) = J_m(b*ri)*Y_m(b*ro)  -  J_m(b*ro)*Y_m(b*ri) 
+
+    So, this procedure can be passed to another routine such as numpy
+    to find zeros.
 
     Args:
         b (float): coordinate.
@@ -127,8 +155,6 @@ def eigensystem(b,m,ri,ro):
         ro (float): outer radius of a circular annulus.
 
     """
-    #if (b > 200.):
-    #    print "WARNING: function 'b_eig_fcn' out of range"
     f = sp.jvp(m,b*ri)*sp.yvp(m,b*ro) - sp.jvp(m,b*ro)*sp.yvp(m,b*ri)
     return f
 
@@ -188,7 +214,7 @@ def compute_zeros(m,mach,ri,ro,n):
 
 
 
-def compute_eigenvalues(omega,m,mach,ri,ro,n):
+def compute_eigenvalues(omega,mach,zeros):
     """ This procedure compute the analytical eigenvalues for the convected
     wave equation. A uniform set of nodes is created to search for sign changes
     in the value for the eigensystem. When a sign change is detected, it is known
@@ -208,19 +234,19 @@ def compute_eigenvalues(omega,m,mach,ri,ro,n):
         An array of the first 'n' eigenvalues for the system.
 
     """
-    if (n % 2 != 0):
-        print('WARNING: number of eigenvalues to find should be divisible by two.')
+#    if (n % 2 != 0):
+#        print('WARNING: number of eigenvalues to find should be divisible by two.')
+#
+#    # Compute zeros for determinant of solution to convected wave equation
+#    nzeros = int(n/2)
+#    zeros = compute_zeros(m,mach,ri,ro,nzeros)
 
-    # Compute zeros for determinant of solution to convected wave equation
-    nzeros = int(n/2)
-    zero_loc = compute_zeros(m,mach,ri,ro,nzeros)
-
-    # Compute eigenvalues by solving: zero_loc^2 = (omega + M*k)^2 - k^2  for k
-    k = np.zeros(n,dtype=np.complex)
-    for i in range(len(zero_loc)):
+    # Compute eigenvalues by solving: zeros^2 = (omega + M*k)^2 - k^2  for k
+    k = np.zeros(2*len(zeros),dtype=np.complex)
+    for i in range(len(zeros)):
         a = mach*mach - 1.
         b = 2.*omega*mach
-        c = omega*omega - zero_loc[i]*zero_loc[i]
+        c = omega*omega - zeros[i]*zeros[i]
         roots = np.roots([a,b,c])
         k[2*i]   = roots[0]
         k[2*i+1] = roots[1]
@@ -229,25 +255,25 @@ def compute_eigenvalues(omega,m,mach,ri,ro,n):
 
 
 
-def compute_eigenvector(r,sigma,m,eigenvalue):
+def compute_eigenvector(r,sigma,m,zero):
     """ Return the eigenvector for the system.
 
     Args:
         r (np.array(float)): array of radial locations.
         sigma (float): ratio of inner to outer radius, ri/ro.
         m (int): circumferential wavenumber.
-        eigenvalue (float): eigenvalue of the eigenvector to be comptued.
+        zero (float): a zero of the determinant of the convected wave equation
 
     Returns:
-        the eigenvector associated with the input 'm' and 'eigenvalue', evaluated at radial locations 
+        the eigenvector associated with the input 'm' and 'zero', evaluated at radial locations 
         defined by the input array 'r'. Length of the return array is len(r).
 
     """
-    Q_mn = -sp.jvp(m,sigma*eigenvalue)/sp.yvp(m,sigma*eigenvalue)
+    Q_mn = -sp.jvp(m,sigma*zero)/sp.yvp(m,sigma*zero)
 
     eigenvector = np.zeros(len(r))
     for irad in range(len(r)):
-        eigenvector[irad] = sp.jv(m,eigenvalue*r[irad]) + Q_mn*sp.yv(m,eigenvalue*r[irad])
+        eigenvector[irad] = sp.jv(m,zero*r[irad]) + Q_mn*sp.yv(m,zero*r[irad])
 
     # Normalize the eigenmode. Find abs of maximum value.
     ev_mag = np.absolute(eigenvector)
