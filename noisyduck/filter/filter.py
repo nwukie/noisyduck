@@ -9,10 +9,10 @@ def drp15(f):
     that it needs to construct the filter.
 
     Args:
-        f: incoming function
+        f (np.array(float)): discrete values of f evaluated on a uniform grid.
 
     Returns:
-        f_tilde: filtered function
+        f_tilde (np.array(float)): filtered function
     """
 
     # 15-point DRP filter coefficients from "Computational Aeroacoustics", Tam
@@ -54,12 +54,19 @@ def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic')
     """ Procedure for filtering/sorting eigenvectors into physical categories.
     Generally, we are trying to determine if a given eigenvector is a convected
     wave, an upstream/downstream traveling acoustic wave, or a spurious mode.
+
+    Args:
+        eigenvalues (complex): Array of eigenvalues.
+        eigenvectors (complex): Array of eigenvectors corresponding to the eigenvalues. [len(r)*nfields,len(eigenvalues)].
+        r (float): Array of radial coordinate locations where the eigenvectors have been evaluated at.
+        alpha_cutoff (float, optional): A cutoff criteria for filtering. Higher alpha will include higher wavenumber modes.
+        filters (string, optional): Select how to filter the incoming eigenvalue/eigenvector pairs.
+
+    Returns:
+        (eigenvalues, eigenvectors): a tuple containing an array of filtered eigenvalues, and their corresponding eigenvectors.
     """
-
-    # Determine resolution
-    res = len(r)
-
     # Separate eigenvectors into primitive variables
+    res = len(r)
     rho_eigenvectors = eigenvectors[0*res:1*res,:]
     u_eigenvectors   = eigenvectors[1*res:2*res,:]
     v_eigenvectors   = eigenvectors[2*res:3*res,:]
@@ -84,22 +91,47 @@ def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic')
                 amp[i]   = amp[i]   + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors[  j,i]*pr_eigenvectors[  j,i]  +  r[j+1]*pr_eigenvectors[  j+1,i]*pr_eigenvectors[  j+1,i])
                 amp_f[i] = amp_f[i] + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors_f[j,i]*pr_eigenvectors_f[j,i]  +  r[j+1]*pr_eigenvectors_f[j+1,i]*pr_eigenvectors_f[j+1,i])
 
-        # Compute selection criteria
-        alpha = amp_f/amp
+        # Evaluate wavenumber selection criteria: alpha
+        alpha = np.zeros(len(amp))
+        for i in range(len(amp)):
+            if (amp[i] < np.finfo(float).eps):
+                # Handle case where initial amplitude for pressure was zero. 
+                # We aren't interested in those modes for acoustics so we set their metric to 
+                # very large, effectively filtering them out.
+                alpha[i] = np.finfo(float).max
+            else:
+                alpha[i] = amp_f[i]/amp[i]
 
-        # Flag eigenvectors that satisfy criteria
+        # Evaluate pressure magnitude selection criteria
+        # Find 2*res eigenvectors with largest |p'|
+        # np.argpartition just returns the indices
+        for i in range(len(amp)):
+            largest = np.argpartition(amp, -2*res)[-2*res:]
+
+
+        # Flag eigenvectors that satisfy criteria: 
+        #   1: Wavenumber filter criteria: alpha < alpha_cutoff.
+        #   2: Pressure magnitude criteria, only 2*res largest are kept.
         keep = []
         for i in range(len(alpha)):
-            if (alpha[i] < alpha_cutoff):
-                keep[len(keep):] = [i]
+            if (np.abs(alpha[i]) < alpha_cutoff) and (i in largest):
+                # Store as structured array so we can sort the entire system by alpha
+                tmp = np.array([(i,alpha[i])],dtype=[('index',np.int),('alpha',np.float)])
+                if (len(keep) == 0):
+                    keep = tmp
+                else:
+                    keep = np.append(keep,tmp, axis=0)
+        
+        # Sort eigenmodes and indices being kept by 'alpha'
+        keep = np.sort(keep,order='alpha')
 
-        # Consolidate eigenvalues/eigenvectors flagged to pass the filter
-        nmodes = len(keep)
+        # Collect eigenvalues/eigenvectors flagged to pass the filter
+        nmodes = keep.shape[0]
         eigenvalues_f  = np.zeros([nmodes],       dtype=np.complex)
         eigenvectors_f = np.zeros([5*res,nmodes], dtype=np.complex)
         for i in range(nmodes):
-            eigenvalues_f[i]    = eigenvalues[keep[i]]
-            eigenvectors_f[:,i] = eigenvectors[:,keep[i]]
+            eigenvalues_f[i]    = eigenvalues[keep['index'][i]]
+            eigenvectors_f[:,i] = eigenvectors[:,keep['index'][i]]
 
         return eigenvalues_f, eigenvectors_f
         

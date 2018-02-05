@@ -17,7 +17,7 @@ Numerical eigenvalue/eigenvector decomposition:
 .. code-block:: python
 
     import noisyduck as nd
-    eigenvalues, eigenvectors, r = nd.annulus.numerical.decomposition(omega,m,ri,ro,rho,u,v,w,p,gam,filter='acoustic')
+    eigenvalues, eigenvectors = nd.annulus.numerical.decomposition(omega,m,r,rho,u,v,w,p,gam,filter='acoustic')
 
 
 
@@ -26,7 +26,7 @@ Analytical eigenvalue/eigenvector decomposition:
 .. code-block:: python
 
     import noisyduck as nd
-    eigenvalues, eigenvectors, r = nd.annulus.analytical.decomposition(omega,m,mach,ri,ro,n)
+    eigenvalues, eigenvectors = nd.annulus.analytical.decomposition(omega,m,mach,ri,ro,n)
 
 See :download:`cylindrical_annulus_uniform_flow.py <../examples/cylindrical_annulus_uniform_flow.py>`.
 

@@ -27,8 +27,6 @@ Example:
     eigenvalues, eigenvectors, r = noisyduck.annulus.numerical.decomposition(omega,m,ri,ro,rho,u,v,w,p,gam)
 
 """
-
-
 import numpy as np
 import scipy
 import noisyduck.filter
@@ -38,30 +36,49 @@ import noisyduck.filter
 
 
 
-
-def decomposition(omega,m,ri,ro,rho,u,v,w,p,gam,res=50,filter='None',alpha=0.00001):
-    """ Compute the numerical eigen-decomposition of the three-dimensional linearized
+def decomposition(omega,m,r,rho,u,v,w,p,gam,filter='None',alpha=0.00001):
+    r""" Compute the numerical eigen-decomposition of the three-dimensional linearized
     Euler equations for a cylindrical annulus.
 
     Args:
-        omega (float): temporal frequency
-        m (int): circumferential wavenumber
-        ri (float): inner radius
-        ro (float): outer radius
-        rho (float): mean density
-        u (float): mean radial velocity
-        v (float): mean tangential velocity
-        w (float): mean axial velocity
-        p (float): mean pressure
-        gam (float): ratio of specific heats
+        omega (float): temporal frequency.
+        m (int): circumferential wavenumber.
+        r (float): array of equally-spaced radius locations for the discretization, including end points.
+        rho (float): mean density.
+        u (float): mean radial velocity.
+        v (float): mean tangential velocity.
+        w (float): mean axial velocity.
+        p (float): mean pressure.
+        gam (float): ratio of specific heats.
+        filter (string, optional): Optional filter for eigenmodes. allowable values = ['None', 'acoustic']
+        alpha (float, optional): Criteria governing filtering acoustic modes. 
 
     Returns:
-        (eigenvalues, eigenvectors, r): a tuple containing an array of eigenvalues, an array of eigenvectors evaluated at radial locations, and an array of those radial locations.
+        (eigenvalues, eigenvectors, r): a tuple containing an array of eigenvalues, an array 
+        of eigenvectors evaluated at radial locations, and an array of those radial locations.
+
+    Note:
+        The eigenvectors being returned include each field :math:`[\rho,u,v,w,p]`. The primitive
+        variables can be extracted into their own eigenvectors by copying out those entries from 
+        the returned eigenvectors as:
+
+        ::
+
+            res = len(r)
+            rho_eigenvectors = eigenvectors[0*res:1*res,:]
+            u_eigenvectors   = eigenvectors[1*res:2*res,:]
+            v_eigenvectors   = eigenvectors[2*res:3*res,:]
+            w_eigenvectors   = eigenvectors[3*res:4*res,:]
+            p_eigenvectors   = eigenvectors[4*res:5*res,:]
 
     """
+    res = len(r)
+    ri = np.min(r)
+    ro = np.max(r)
+
 
     # Construct eigensystem
-    M, N, r = construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam)
+    M, N = construct_numerical_eigensystem(omega,m,r,rho,u,v,w,p,gam)
 
     # Solve Generalized Eigenvalue Problem for complex, nonhermitian system
     eigenvalues, eigenvectors = scipy.linalg.eig(M,N,right=True,overwrite_a=True,overwrite_b=True)
@@ -70,20 +87,17 @@ def decomposition(omega,m,ri,ro,rho,u,v,w,p,gam,res=50,filter='None',alpha=0.000
     eigenvectors = np.insert(eigenvectors, [res]    , [0.] ,axis=0)
     eigenvectors = np.insert(eigenvectors, [2*res-1], [0.] ,axis=0)
 
-
-
-
+    # Potential filtering
     if (filter == 'acoustic'):
         eigenvalues, eigenvectors = noisyduck.filter.physical(eigenvalues,eigenvectors,r,alpha_cutoff=alpha,filters=filter)
 
-
-    return eigenvalues, eigenvectors, r
+    return eigenvalues, eigenvectors
 
 
     
 
 
-def construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam):
+def construct_numerical_eigensystem(omega,m,r,rho,u,v,w,p,gam):
     """ Constructs the numerical representation of the eigenvalue problem associated
     with the three-dimensional linearized euler equations subjected to a normal mode
     analysis.
@@ -95,9 +109,7 @@ def construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam):
     Args:
         omega (float): temporal frequency.
         m (int): circumferential wavenumber.
-        ri (float): inner radius for circular annulus.
-        ro (float): outer radius for circular annulus.
-        res (int): number of points to use to discretize the eigensystem.
+        r (float): array of equally-spaced radius locations for the discretization, including end points.
         rho (float): mean density.
         u (float): mean radial velocity.
         v (float): mean tangential velocity.
@@ -106,18 +118,20 @@ def construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam):
         gam (float): ratio of specific heats.
 
     Returns:
-        (M, N, r): left-hand side of generalized eigenvalue problem, right-hand side of generalized eigenvalue problem, and radial coordinates of the discretization.
+        (M, N, r): left-hand side of generalized eigenvalue problem, right-hand side 
+        of generalized eigenvalue problem, and radial coordinates of the discretization.
     """
 
     # Define real/imag parts for temporal frequency
     romega = omega
     iomega = -10.e-5*romega
 
-
     # Define geometry and discretization
+    res = len(r)
+    ri = np.min(r)
+    ro = np.max(r)
     dr = (ro-ri)/(res-1)
     nfields = 5
-    r = np.linspace(ri,ro,res)
     dof = res*nfields
 
 
@@ -156,8 +170,6 @@ def construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam):
     for i in range(res):
         ridentity[i,i] = 1./r[i]
     
-
-
 
     # Block 1,1
     irow = 1
@@ -366,7 +378,7 @@ def construct_numerical_eigensystem(omega,m,ri,ro,res,rho,u,v,w,p,gam):
     N = -N
 
 
-    return M, N, r
+    return M, N
 
 
 
