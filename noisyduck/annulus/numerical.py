@@ -27,8 +27,6 @@ Example:
     eigenvalues, eigenvectors, r = noisyduck.annulus.numerical.decomposition(omega,m,ri,ro,rho,u,v,w,p,gam)
 
 """
-
-
 import numpy as np
 import scipy
 import noisyduck.filter
@@ -89,12 +87,9 @@ def decomposition(omega,m,r,rho,u,v,w,p,gam,filter='None',alpha=0.00001):
     eigenvectors = np.insert(eigenvectors, [res]    , [0.] ,axis=0)
     eigenvectors = np.insert(eigenvectors, [2*res-1], [0.] ,axis=0)
 
-
-
-
+    # Potential filtering
     if (filter == 'acoustic'):
         eigenvalues, eigenvectors = noisyduck.filter.physical(eigenvalues,eigenvectors,r,alpha_cutoff=alpha,filters=filter)
-
 
     return eigenvalues, eigenvectors
 
@@ -175,8 +170,6 @@ def construct_numerical_eigensystem(omega,m,r,rho,u,v,w,p,gam):
     for i in range(res):
         ridentity[i,i] = 1./r[i]
     
-
-
 
     # Block 1,1
     irow = 1
