@@ -183,7 +183,8 @@ def compute_zeros(m,mach,ri,ro,n):
     zero_loc = np.zeros(n)
     for rmode in range(n):
         if rmode == 0:
-            beta = np.linspace(0.5,200,2000)
+            #beta = np.linspace(0.5,200,2000)
+            beta = np.linspace(0.000001,100,2000)
         else:
             beta = np.linspace(zero_loc[rmode-1]+0.1,200,20000)
 
