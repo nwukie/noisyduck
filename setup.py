@@ -43,7 +43,7 @@ test_requirements = [
 
 setup(
     name='noisyduck',
-    version='0.1.3',
+    version='0.1.4',
     description="A python tool for computing eigenmode decompositions of duct flows.",
     long_description=readme + '\n\n' + history,
     author="Nathan Wukie",
