@@ -24,7 +24,7 @@ Example:
 
 ::
     
-    eigenvalues, eigenvectors, r = noisyduck.annulus.numerical.decomposition(omega,m,ri,ro,rho,u,v,w,p,gam)
+    eigenvalues, eigenvectors = noisyduck.annulus.numerical.decomposition(omega,m,r,rho,u,v,w,p,gam,filter='acoustic')
 
 """
 import numpy as np
