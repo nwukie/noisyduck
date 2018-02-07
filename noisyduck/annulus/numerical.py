@@ -91,6 +91,7 @@ def decomposition(omega,m,r,rho,u,v,w,p,gam,filter='None',alpha=0.00001):
     if (filter == 'acoustic'):
         eigenvalues, eigenvectors = noisyduck.filter.physical(eigenvalues,eigenvectors,r,alpha_cutoff=alpha,filters=filter)
 
+
     return eigenvalues, eigenvectors
 
 

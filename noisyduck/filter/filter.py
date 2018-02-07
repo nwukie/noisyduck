@@ -74,8 +74,22 @@ def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic')
     p_eigenvectors   = eigenvectors[4*res:5*res,:]
 
     if (filters == 'acoustic'):
-        # Work with pressure component of eigenvectors
+        # Here, we work with the pressure component of the eigenvectors
         # Create separate copy so we can compare before/after modes
+        #
+        # We pick some arbitrary point in the eigenvector and compute the angle
+        #   phi = atan2(Im{p'},Re{p'})
+        #
+        # Now, rotate the original vector so it is strictly real-valued so that
+        # the sorting algorithm can just look at the real part of the eigenvector 
+        # and doesn't accidentally see something that is zero, but just happened
+        # to be at the wrong phase so all the energy was in the imaginary part.
+        phi = np.arctan2(p_eigenvectors[5,:].imag, p_eigenvectors[5,:].real)
+        for i in range(p_eigenvectors.shape[1]):
+            p_eigenvectors[:,i] = p_eigenvectors[:,i]*np.exp(-1j*phi[i])
+
+
+        # Just handling the real part now.
         pr_eigenvectors   = np.copy(np.real(p_eigenvectors))
         pr_eigenvectors_f = np.copy(pr_eigenvectors)
 
