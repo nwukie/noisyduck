@@ -50,7 +50,8 @@ def drp15(f):
 
 
 
-def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic'):
+#def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic'):
+def physical(eigenvalues,ul,ur,r,alpha_cutoff=0.00001,filters='acoustic'):
     """ Procedure for filtering/sorting eigenvectors into physical categories.
     Generally, we are trying to determine if a given eigenvector is a convected
     wave, an upstream/downstream traveling acoustic wave, or a spurious mode.
@@ -67,11 +68,11 @@ def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic')
     """
     # Separate eigenvectors into primitive variables
     res = len(r)
-    rho_eigenvectors = eigenvectors[0*res:1*res,:]
-    u_eigenvectors   = eigenvectors[1*res:2*res,:]
-    v_eigenvectors   = eigenvectors[2*res:3*res,:]
-    w_eigenvectors   = eigenvectors[3*res:4*res,:]
-    p_eigenvectors   = eigenvectors[4*res:5*res,:]
+    rho_eigenvectors = np.copy(ur[0*res:1*res,:])
+    u_eigenvectors   = np.copy(ur[1*res:2*res,:])
+    v_eigenvectors   = np.copy(ur[2*res:3*res,:])
+    w_eigenvectors   = np.copy(ur[3*res:4*res,:])
+    p_eigenvectors   = np.copy(ur[4*res:5*res,:])
 
     if (filters == 'acoustic'):
         # Here, we work with the pressure component of the eigenvectors
@@ -141,12 +142,14 @@ def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic')
 
         # Collect eigenvalues/eigenvectors flagged to pass the filter
         nmodes = keep.shape[0]
-        eigenvalues_f  = np.zeros([nmodes],       dtype=np.complex)
-        eigenvectors_f = np.zeros([5*res,nmodes], dtype=np.complex)
+        eigenvalues_f = np.zeros([nmodes],       dtype=np.complex)
+        ul_f          = np.zeros([5*res,nmodes], dtype=np.complex)
+        ur_f          = np.zeros([5*res,nmodes], dtype=np.complex)
         for i in range(nmodes):
-            eigenvalues_f[i]    = eigenvalues[keep['index'][i]]
-            eigenvectors_f[:,i] = eigenvectors[:,keep['index'][i]]
+            eigenvalues_f[i] = np.copy(eigenvalues[keep['index'][i]])
+            ur_f[:,i]        = np.copy(ur[:,keep['index'][i]])
+            ul_f[:,i]        = np.copy(ul[:,keep['index'][i]])
 
-        return eigenvalues_f, eigenvectors_f
+        return eigenvalues_f, ul_f, ur_f
         
 

@@ -80,19 +80,42 @@ def decomposition(omega,m,r,rho,u,v,w,p,gam,filter='None',alpha=0.00001):
     # Construct eigensystem
     M, N = construct_numerical_eigensystem(omega,m,r,rho,u,v,w,p,gam)
 
+
+
     # Solve Generalized Eigenvalue Problem for complex, nonhermitian system
-    eigenvalues, eigenvectors = scipy.linalg.eig(M,N,right=True,overwrite_a=True,overwrite_b=True)
+    evals, evecs_l, evecs_r = scipy.linalg.eig(np.linalg.inv(N)@M,left=True,right=True,overwrite_a=True,overwrite_b=True)
+    #evals, evecs_l, evecs_r = scipy.linalg.eig(M,N,left=True,right=True,overwrite_a=True,overwrite_b=True)
+    #evals, evecs_l, evecs_r = scipy.linalg.eig(M,N,left=True,right=True,overwrite_a=False,overwrite_b=False)
+    #evals, evecs_l, evecs_r = scipy.linalg.eig(M,N,left=True,right=True)
+
+
+
+
+
+    #evals, evecs_l, evecs_r = scipy.linalg.eig(np.linalg.inv(N)@M,left=True,right=True,overwrite_a=True,overwrite_b=True)
+
+#    mat = np.linalg.inv(N)@M
+#    #evals, evecs_r = scipy.linalg.eig(np.linalg.inv(N)@M,right=True,overwrite_a=True,overwrite_b=True)
+#    evals, evecs_r = scipy.linalg.eig(mat,right=True)
+#
+#    mat = np.linalg.inv(N.conj().T)@M.conj().T
+#    #junk,  evecs_l = scipy.linalg.eig(np.linalg.inv(N.conj().T)@M.conj().T,      right=True,overwrite_a=True,overwrite_b=True)
+#    junk,  evecs_l = scipy.linalg.eig(mat,left=True)
     
     # Add radial velocity end points back where they were removed due to boundary conditions
-    eigenvectors = np.insert(eigenvectors, [res]    , [0.] ,axis=0)
-    eigenvectors = np.insert(eigenvectors, [2*res-1], [0.] ,axis=0)
+    evecs_r = np.insert(evecs_r, [res]    , [0.] ,axis=0)
+    evecs_r = np.insert(evecs_r, [2*res-1], [0.] ,axis=0)
+    evecs_l = np.insert(evecs_l, [res]    , [0.] ,axis=0)
+    evecs_l = np.insert(evecs_l, [2*res-1], [0.] ,axis=0)
 
     # Potential filtering
     if (filter == 'acoustic'):
-        eigenvalues, eigenvectors = noisyduck.filter.physical(eigenvalues,eigenvectors,r,alpha_cutoff=alpha,filters=filter)
+        evals, evecs_l, evecs_r = noisyduck.filter.physical(evals,evecs_l,evecs_r,r,alpha_cutoff=alpha,filters=filter)
 
+    # Return conventional definition of the left eigenvector
+    evecs_l = np.copy(evecs_l.conj())
 
-    return eigenvalues, eigenvectors
+    return evals, evecs_l, evecs_r
 
 
     
@@ -119,8 +142,7 @@ def construct_numerical_eigensystem(omega,m,r,rho,u,v,w,p,gam):
         gam (float): ratio of specific heats.
 
     Returns:
-        (M, N, r): left-hand side of generalized eigenvalue problem, right-hand side 
-        of generalized eigenvalue problem, and radial coordinates of the discretization.
+        (M, N): left-hand side of generalized eigenvalue problem, right-hand side of generalized eigenvalue problem.
     """
 
     # Define real/imag parts for temporal frequency
@@ -376,7 +398,7 @@ def construct_numerical_eigensystem(omega,m,r,rho,u,v,w,p,gam):
     
     
     # Move N to right-hand side
-    N = -N
+    N = np.copy(-N)
 
 
     return M, N

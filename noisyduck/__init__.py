@@ -8,4 +8,5 @@ __version__ = '0.1.4'
 
 from . import annulus
 from . import filter
+from .io import write_decomposition
 
