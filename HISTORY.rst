@@ -6,3 +6,11 @@ History
 ------------------
 
 * First release on PyPI.
+
+0.1.5 (2018-03-12)
+------------------
+
+* New governing equations
+* Tests for uniform axial mean flow
+* New API + documentation
+
