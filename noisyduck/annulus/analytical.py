@@ -13,13 +13,15 @@ decomposition correspond specifically to the acoustic pressure disturbance.
 Theory:
 ~~~~~~~
 
-The analysis here follows that of Moinier and Giles, "Eigenmode Analysis for Turbomachinery Applications", Journal of Propulsion and Power, Vol. 21, No. 6, 2005.
+The analysis here follows that of Moinier and Giles, "Eigenmode Analysis for 
+Turbomachinery Applications", Journal of Propulsion and Power, Vol. 21, No. 6, 2005.
 
 For a uniform axial mean, linear pressure perturbations satisfy the convected wave equation
 
 .. math::
 
-    \left( \frac{\partial}{\partial t} + M \frac{\partial}{\partial z} \right)^2 p = \nabla^2 p \quad\quad\quad \lambda < r < 1
+    \left( \frac{\partial}{\partial t} + M \frac{\partial}{\partial z} \right)^2 p = 
+    \nabla^2 p \quad\quad\quad \lambda < r < 1
 
 
 where :math:`M` is the Mach number of the axial mean flow and :math:`r` has been normalized
@@ -43,7 +45,8 @@ This leads to a Bessel equation
 
 .. math::
 
-    \frac{1}{r} \frac{d}{dr} \left(r \frac{dP}{dr} \right) + \left( \mu^2 - \frac{m^2}{r^2} \right)P = 0    \quad\quad \lambda < r < 1
+    \frac{1}{r} \frac{d}{dr} \left(r \frac{dP}{dr} \right) + \left( \mu^2 - \frac{m^2}{r^2} 
+    \right)P = 0    \quad\quad \lambda < r < 1
 
 where :math:`\mu^2 = (\omega + M k)^2 - k^2`. The solution to the Bessel equation is
 
@@ -74,7 +77,7 @@ Example:
 
 ::
     
-    eigenvalues, eigenvectors, r = noisyduck.annulus.analytical.decomposition(omega,m,mach,ri,ro,n)
+    eigenvalues, eigenvectors = noisyduck.annulus.analytical.decomposition(omega,m,mach,r,n)
 
 """
 import numpy as np
@@ -83,26 +86,32 @@ import scipy.optimize as op
 
 
 
-def decomposition(omega,m,mach,ri,ro,n):
+def decomposition(omega,m,mach,r,n):
     """ This procedure computes the analytical eigen-decomposition of 
     the convected wave equation. The eigenvectors returned correspond specifically
     with acoustic pressure perturbations.
+
+    Inner and outer radii are computed using min(r) and max(r), so it is important 
+    that these end-points are included in the incoming array of radial locations.
 
     Args:
         omega (float): temporal wave number.
         m (int): circumferential wave number.
         mach (float): Mach number.
-        ri (float): inner radius.
-        ro (float): outer radius.
+        r (float): array of radius stations, including rmin and rmax.
         n (int): number of eigenvalues/eigenvectors to compute.
 
     Returns:
-        (eigenvalues, eigenvectors, r): a tuple containing an array of eigenvalues, an array of eigenvectors evaluated at radial locations, and an array of those radial locations.
+        (eigenvalues, eigenvectors): a tuple containing an array of eigenvalues, and an array of eigenvectors evaluated at radial locations.
 
     """
 
     if (n % 2 != 0):
-        print('WARNING: number of eigenvalues to find should be divisible by two.')
+        print("WARNING: number of eigenvalues to find should be divisible by two. "
+              "Because, for each zero found, there are two associated eigenvalues.")
+
+    ri = np.min(r)
+    ro = np.max(r)
 
     # Compute zeros for determinant of solution to convected wave equation
     # Then use zeros to compute the axial wavenumbers(eigenvalues)
@@ -110,13 +119,13 @@ def decomposition(omega,m,mach,ri,ro,n):
     zeros = compute_zeros(m,mach,ri,ro,nzeros)
     eigenvalues = compute_eigenvalues(omega,mach,zeros)
 
-    r = np.linspace(ri,ro,100)
-    eigenvectors = np.zeros((100,n))
+    #r = np.linspace(ri,ro,100)
+    eigenvectors = np.zeros((len(r),n))
     for i in range(len(zeros)):
         eigenvectors[:,2*i  ] = compute_eigenvector(r,(ri/ro),m,zeros[i])
         eigenvectors[:,2*i+1] = compute_eigenvector(r,(ri/ro),m,zeros[i])
 
-    return eigenvalues, eigenvectors, r
+    return eigenvalues, eigenvectors
 
 
 
@@ -211,10 +220,6 @@ def compute_zeros(m,mach,ri,ro,n):
 
 
 
-
-
-
-
 def compute_eigenvalues(omega,mach,zeros):
     """ This procedure compute the analytical eigenvalues for the convected
     wave equation. A uniform set of nodes is created to search for sign changes
@@ -235,13 +240,6 @@ def compute_eigenvalues(omega,mach,zeros):
         An array of the first 'n' eigenvalues for the system.
 
     """
-#    if (n % 2 != 0):
-#        print('WARNING: number of eigenvalues to find should be divisible by two.')
-#
-#    # Compute zeros for determinant of solution to convected wave equation
-#    nzeros = int(n/2)
-#    zeros = compute_zeros(m,mach,ri,ro,nzeros)
-
     # Compute eigenvalues by solving: zeros^2 = (omega + M*k)^2 - k^2  for k
     k = np.zeros(2*len(zeros),dtype=np.complex)
     for i in range(len(zeros)):

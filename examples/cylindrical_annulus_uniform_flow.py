@@ -6,48 +6,37 @@ import noisyduck as nd
 
 
 # Define mean state
-gam = 1.4
-rho = 1.2212179
-u   = 0.
-v   = 0.
-w   = 103.2586448
-p   = 103341.6659
+gam=1.4; rho=1.2; vr=0.; vt=0.; vz=100.; p=100000.
 
 # Geometry
-ri    = 0.25
-ro    = 1.0
-r = np.linspace(ri,ro,50)
+ri=0.25; ro=1.0; res=50
+r = np.linspace(ri,ro,res)
 
 # Define circumferential and temporal wavenumber
-omega = 3441.9548
-m     = 2
+omega=3000.; m=2
 
+# Numerical decomposition (raw, filtered)
+eigenvalues_r, eigenvectors_rl, eigenvectors_rr = nd.annulus.numerical.decomposition(omega,m,r,rho,vr,vt,vz,p,gam,filter='None',perturb_omega=True)
+eigenvalues_f, eigenvectors_fl, eigenvectors_fr = nd.annulus.numerical.decomposition(omega,m,r,rho,vr,vt,vz,p,gam,filter='acoustic',alpha=0.00001,perturb_omega=True)
 
-# Numerical decomposition
-eigenvalues_r, eigenvectors_r = nd.annulus.numerical.decomposition(omega,m,r,rho,u,v,w,p,gam,filter='None')
-eigenvalues_n, eigenvectors_n = nd.annulus.numerical.decomposition(omega,m,r,rho,u,v,w,p,gam,filter='acoustic')
 
 # Separate eigenvectors into primitive variables
 res = len(r)
-rho_eigenvectors = eigenvectors_n[0*res:1*res,:]
-u_eigenvectors   = eigenvectors_n[1*res:2*res,:]
-v_eigenvectors   = eigenvectors_n[2*res:3*res,:]
-w_eigenvectors   = eigenvectors_n[3*res:4*res,:]
-p_eigenvectors   = eigenvectors_n[4*res:5*res,:]
-
-
-
+rho_eigenvectors = eigenvectors_fr[0*res:1*res,:]
+vr_eigenvectors  = eigenvectors_fr[1*res:2*res,:]
+vt_eigenvectors  = eigenvectors_fr[2*res:3*res,:]
+vz_eigenvectors  = eigenvectors_fr[3*res:4*res,:]
+p_eigenvectors   = eigenvectors_fr[4*res:5*res,:]
 
 
 # Nondimensionalize for analytical case
 c = np.sqrt(gam*p/rho)
-mach = w/c
+mach = vz/c
 omega = omega/c
-sigma = ri
-n = 20
+n = len(eigenvalues_f)
 
 # Analytical decomposition
-eigenvalues_a, eigenvectors_a, r_a = nd.annulus.analytical.decomposition(omega,m,mach,ri,ro,n)
+eigenvalues_a, eigenvectors_a = nd.annulus.analytical.decomposition(omega,m,mach,r,n)
 
 
 
@@ -77,11 +66,11 @@ for i in range(len(eigenvalues_r)):
 
 
 # Plot numerical eigenvalues
-for i in range(len(eigenvalues_n)):
-    if (eigenvalues_n[i].imag > 0.):
-        h_up, = ax2.plot(eigenvalues_n[i].real,eigenvalues_n[i].imag,   'b^',markersize=5, label='Acc. Down')
-    elif (eigenvalues_n[i].imag < 0.):
-        h_down, = ax2.plot(eigenvalues_n[i].real,eigenvalues_n[i].imag, 'bs',markersize=5, label='Acc. Up'  )
+for i in range(len(eigenvalues_f)):
+    if (eigenvalues_f[i].imag > 0.):
+        h_up, = ax2.plot(eigenvalues_f[i].real,eigenvalues_f[i].imag,   'b^',markersize=5, label='Acc. Down')
+    elif (eigenvalues_f[i].imag < 0.):
+        h_down, = ax2.plot(eigenvalues_f[i].real,eigenvalues_f[i].imag, 'bs',markersize=5, label='Acc. Up'  )
 
 # Plot analytical eigenvalues
 h_analytical, = ax2.plot(eigenvalues_a.real,eigenvalues_a.imag, 'ko', markerfacecolor='None',markersize=10,label='Analytical')
@@ -89,7 +78,7 @@ h_analytical, = ax2.plot(eigenvalues_a.real,eigenvalues_a.imag, 'ko', markerface
 
 # Plot eigenvectors
 for i in range(4):
-    h_va, = ax3.plot(eigenvectors_a[:,2*i],r_a, 'k', linewidth=1, label='Analytical')
+    h_va, = ax3.plot(eigenvectors_a[:,2*i],r, 'k', linewidth=1, label='Analytical')
     h_vn, = ax3.plot(p_eigenvectors[:,2*i].real/np.max(np.abs(p_eigenvectors[:,2*i].real)),r, 'ko', label='Numerical')
 
 
@@ -104,15 +93,7 @@ ax2.set_ylabel('$Im(k_z)$', fontsize=12)
 ax3.set(xlim=(-1.,1.), ylim=(0.25,1.0), xlabel="$Re(P_{mn})$", ylabel="Radial coordinate")
 ax3.legend(handles=[h_va,h_vn],numpoints=1,loc=0)
 
-
-
-
-
-# Axis settings
-#ax1.legend(handles=[h_analytical,h_up,h_down],numpoints=1)
-#ax1.set_xlabel('$Re(k_z)$')
-#ax1.set_ylabel('$Im(k_z)$')
-
+# Display
 plt.show()
 
 

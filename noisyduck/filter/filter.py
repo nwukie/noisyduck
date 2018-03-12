@@ -50,15 +50,20 @@ def drp15(f):
 
 
 
-#def physical(eigenvalues,eigenvectors,r,alpha_cutoff=0.00001,filters='acoustic'):
 def physical(eigenvalues,ul,ur,r,alpha_cutoff=0.00001,filters='acoustic'):
     """ Procedure for filtering/sorting eigenvectors into physical categories.
     Generally, we are trying to determine if a given eigenvector is a convected
     wave, an upstream/downstream traveling acoustic wave, or a spurious mode.
 
+    References:
+    [1] Maldonado, A.L.P., Astley, R. J., Coupland, J., Gabard, G., and Sutliff, D., 
+        "Sound Propagation in Lined Annular Ducts with Mean Swirling Flow" 21st AIAA/CEAS 
+        Aeroacoustics Conference, June 2015. AIAA 2015-2522.
+
     Args:
         eigenvalues (complex): Array of eigenvalues.
-        eigenvectors (complex): Array of eigenvectors corresponding to the eigenvalues. [len(r)*nfields,len(eigenvalues)].
+        ul (complex): Array of left eigenvectors; one for each eigenvalue.  [len(r)*nfields,len(eigenvalues)].
+        ur (complex): Array of right eigenvectors; one for each eigenvalue. [len(r)*nfields,len(eigenvalues)].
         r (float): Array of radial coordinate locations where the eigenvectors have been evaluated at.
         alpha_cutoff (float, optional): A cutoff criteria for filtering. Higher alpha will include higher wavenumber modes.
         filters (string, optional): Select how to filter the incoming eigenvalue/eigenvector pairs.

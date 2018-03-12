@@ -6,8 +6,10 @@ def write_decomposition(eigenvalues, eigenvectors_l, eigenvectors_r, r, filename
 
     Args:
         eigenvalues (complex): array of eigenvalues of the decomposition.
-        eigenvectors (np.array([float,float])): rank-2 array of eigenvectors from the decomposition. [len(r),len(nvectors)].
+        eigenvectors_l (np.array([float,float])): rank-2 array of left eigenvectors.  [len(r)*nfields,len(nvectors)]
+        eigenvectors_r (np.array([float,float])): rank-2 array of right eigenvectors. [len(r)*nfields,len(nvectors)].
         r (float): array of radial coordinates from the discretization that the eigenvectors were evaluated at.
+        filename (string): filename where data will be written to. If it exists, it is overwritten.
 
     """
     # Open new file

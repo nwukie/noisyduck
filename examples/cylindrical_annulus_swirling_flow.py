@@ -1,46 +1,35 @@
 from __future__ import division
-import pylab
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc, rcParams
 import noisyduck as nd
 
 # Geometry
-res   = 50
-ri    = 0.4
-ro    = 1.0
+res = 50 ; ri = 0.4 ; ro = 1.0
 r = np.linspace(ri,ro,res)
 
 # Define mean state
-GAMMA = 0.2
-gam = 1.4
-u   = 0.
-v   = GAMMA/r
-w   = 0.3
-p   = (1./gam) + (GAMMA*GAMMA/2.)*(1. - 1./(r*r))
+GAMMA=0.2; gam=1.4; vr=0.; vt=GAMMA/r; vz=0.3
+p = (1./gam) + (GAMMA*GAMMA/2.)*(1. - 1./(r*r))
 
-# Constant density: Tam, Auriault
-#rho = 1.0
 # Homentropic: Kousen, Nijbour
 rho = (1. + GAMMA*GAMMA*(gam-1.)*(1. - 1./(r*r))/2.)**(1./(gam-1.))
 
-
 # Define circumferential and temporal wavenumber
-omega = -10.
-m = 2
+omega=-10.; m=2
 
+# Numerical decomposition (raw, filtered)
+eigenvalues_r, eigenvectors_rl, eigenvectors_rr = nd.annulus.numerical.decomposition(omega,m,r,rho,vr,vt,vz,p,gam,filter='None')
+eigenvalues_f, eigenvectors_fl, eigenvectors_fr = nd.annulus.numerical.decomposition(omega,m,r,rho,vr,vt,vz,p,gam,filter='acoustic',alpha=0.00001)
 
-# Numerical decomposition
-eigenvalues_r, eigenvectors_r = nd.annulus.numerical.decomposition(omega,m,r,rho,u,v,w,p,gam,filter='None')
-eigenvalues_n, eigenvectors_n = nd.annulus.numerical.decomposition(omega,m,r,rho,u,v,w,p,gam,filter='acoustic',alpha=0.00001)
 
 # Separate eigenvectors into primitive variables
 res = len(r)
-rho_eigenvectors = eigenvectors_n[0*res:1*res,:]
-u_eigenvectors   = eigenvectors_n[1*res:2*res,:]
-v_eigenvectors   = eigenvectors_n[2*res:3*res,:]
-w_eigenvectors   = eigenvectors_n[3*res:4*res,:]
-p_eigenvectors   = eigenvectors_n[4*res:5*res,:]
+rho_eigenvectors = eigenvectors_fr[0*res:1*res,:]
+vr_eigenvectors  = eigenvectors_fr[1*res:2*res,:]
+vt_eigenvectors  = eigenvectors_fr[2*res:3*res,:]
+vz_eigenvectors  = eigenvectors_fr[3*res:4*res,:]
+p_eigenvectors   = eigenvectors_fr[4*res:5*res,:]
 
 
 # Eigenvalues for free vortex swirling flow in a cylindrical annulus.
@@ -112,20 +101,20 @@ for i in range(len(eigenvalues_r)):
         ax1.plot(eigenvalues_r[i].real,eigenvalues_r[i].imag, 'bs',markersize=5)
 
 # Plot filtered numerical eigenvalues
-for i in range(len(eigenvalues_n)):
-    if (eigenvalues_n[i].imag > 0.):
-        h_up, = ax2.plot(eigenvalues_n[i].real,eigenvalues_n[i].imag,   'b^',markersize=5, label='Acc. Down')
-    elif (eigenvalues_n[i].imag < 0.):
-        h_down, = ax2.plot(eigenvalues_n[i].real,eigenvalues_n[i].imag, 'bs',markersize=5, label='Acc. Up'  )
+for i in range(len(eigenvalues_f)):
+    if (eigenvalues_f[i].imag > 0.):
+        h_up, = ax2.plot(eigenvalues_f[i].real,eigenvalues_f[i].imag,   'b^',markersize=5, label='Acc. Down')
+    elif (eigenvalues_f[i].imag < 0.):
+        h_down, = ax2.plot(eigenvalues_f[i].real,eigenvalues_f[i].imag, 'bs',markersize=5, label='Acc. Up'  )
 
 # Plot analytical eigenvalues
 h_analytical, = ax2.plot(eigenvalues_nijbour[:,0],eigenvalues_nijbour[:,1], 'ko', markerfacecolor='None',markersize=10,label='Nijbour(2001)')
 
 
-
-# Plot first 4 eigenvectors
+# Plot first 4 eigenvectors of pressure, normalized by maximum value
 for i in range(4):
-    ax3.plot(p_eigenvectors[:,2*i].real/np.max(np.abs(p_eigenvectors[:,2*i].real)),r, 'ko')
+    loc = np.argmax(np.abs(p_eigenvectors[:,2*i]))
+    ax3.plot(p_eigenvectors[:,2*i].real/np.max(np.abs(p_eigenvectors[loc,2*i].real)),r, 'ko')
 
 
 # Eigenvalue plot settings
@@ -134,14 +123,9 @@ ax1.set_ylabel('$Im(k_z)$', fontsize=12)
 ax2.legend(handles=[h_analytical,h_up,h_down],numpoints=1)
 ax2.set_xlabel('$Re(k_z)$', fontsize=12)
 ax2.set_ylabel('$Im(k_z)$', fontsize=12)
-
 # Eigenvector plot settings
 ax3.set(xlim=(-1.,1.), ylim=(0.4,1.0), xlabel="$Re(P_{mn})$", ylabel="Radial coordinate")
 
-
-#fig1.savefig('annulus_swirlingflow_eigenvalues_raw.png')
-#fig2.savefig('annulus_swirlingflow_eigenvalues_filtered.png')
-#fig3.savefig('annulus_swirlingflow_eigenvectors.png')
 plt.show()
 
 
