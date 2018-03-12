@@ -1,12 +1,13 @@
 import numpy as np
 
+
 # 15-point Dispersion Relation Preserving Filter
 def drp15(f):
     """ 15-point DRP filter from "Computational Aeroacoustics", Tam. Strongly
     filters low-wavenumber components of a signal. End points are handled by
-    creating an artificial reflection of the origin signal about the end points.
-    In this way, the central filter has 'ghost' information past the end points
-    that it needs to construct the filter.
+    creating an artificial reflection of the origin signal about the end 
+    points. In this way, the central filter has 'ghost' information past the 
+    end points that it needs to construct the filter.
 
     Args:
         f (np.array(float)): discrete values of f evaluated on a uniform grid.
@@ -16,29 +17,30 @@ def drp15(f):
     """
 
     # 15-point DRP filter coefficients from "Computational Aeroacoustics", Tam
-    d0  =  0.2042241813072920
+    d0  = 0.2042241813072920
     dp1 = -0.1799016298200503
     dm1 = -0.1799016298200503
-    dp2 =  0.1224349282118140
-    dm2 =  0.1224349282118140
+    dp2 = 0.1224349282118140
+    dm2 = 0.1224349282118140
     dp3 = -6.3456279827554890e-2
     dm3 = -6.3456279827554890e-2
-    dp4 =  2.4341225689340974e-2
-    dm4 =  2.4341225689340974e-2
+    dp4 = 2.4341225689340974e-2
+    dm4 = 2.4341225689340974e-2
     dp5 = -6.5519987489327603e-3
     dm5 = -6.5519987489327603e-3
-    dp6 =  1.1117554451990776e-3
-    dm6 =  1.1117554451990776e-3
+    dp6 = 1.1117554451990776e-3
+    dm6 = 1.1117554451990776e-3
     dp7 = -9.0091603462069583e-5
     dm7 = -9.0091603462069583e-5
-    coeffs = [dm7, dm6, dm5, dm4, dm3, dm2, dm1, d0, dp1, dp2, dp3, dp4, dp5, dp6, dp7]
+    coeffs = [dm7, dm6, dm5, dm4, dm3, dm2, dm1, d0, 
+              dp1, dp2, dp3, dp4, dp5, dp6, dp7]
 
     # Create storage for result
     f_tilde = np.copy(f)
 
     # Duplicate waveform to handle end points
-    two = np.append(np.flipud(f),f)
-    three = np.append(two,np.flipud(f))
+    two = np.append(np.flipud(f), f)
+    three = np.append(two, np.flipud(f))
 
     # Apply filter
     for j in range(len(f)):
@@ -48,36 +50,43 @@ def drp15(f):
     return f_tilde
 
 
-
-
-def physical(eigenvalues,ul,ur,r,alpha_cutoff=0.00001,filters='acoustic'):
+def physical(eigenvalues, ul, ur, r, alpha_cutoff=0.00001, filters='acoustic'):
     """ Procedure for filtering/sorting eigenvectors into physical categories.
     Generally, we are trying to determine if a given eigenvector is a convected
     wave, an upstream/downstream traveling acoustic wave, or a spurious mode.
 
     References:
-    [1] Maldonado, A.L.P., Astley, R. J., Coupland, J., Gabard, G., and Sutliff, D., 
-        "Sound Propagation in Lined Annular Ducts with Mean Swirling Flow" 21st AIAA/CEAS 
-        Aeroacoustics Conference, June 2015. AIAA 2015-2522.
+    [1] Maldonado, A.L.P., Astley, R. J., Coupland, J., Gabard, G., and 
+        Sutliff, D., "Sound Propagation in Lined Annular Ducts with Mean 
+        Swirling Flow" 21st AIAA/CEAS Aeroacoustics Conference, June 2015. 
+        AIAA 2015-2522.
 
     Args:
         eigenvalues (complex): Array of eigenvalues.
-        ul (complex): Array of left eigenvectors; one for each eigenvalue.  [len(r)*nfields,len(eigenvalues)].
-        ur (complex): Array of right eigenvectors; one for each eigenvalue. [len(r)*nfields,len(eigenvalues)].
-        r (float): Array of radial coordinate locations where the eigenvectors have been evaluated at.
-        alpha_cutoff (float, optional): A cutoff criteria for filtering. Higher alpha will include higher wavenumber modes.
-        filters (string, optional): Select how to filter the incoming eigenvalue/eigenvector pairs.
+        ul (complex): Array of left eigenvectors; one for each eigenvalue.
+                      [len(r)*nfields,len(eigenvalues)].
+        ur (complex): Array of right eigenvectors; one for each eigenvalue.
+                      [len(r)*nfields,len(eigenvalues)].
+        r (float): Array of radial coordinate locations where the eigenvectors
+                   have been evaluated at.
+        alpha_cutoff (float, optional): 
+            A cutoff criteria for filtering. Higher alpha will include higher
+            wavenumber modes.
+        filters (string, optional): 
+            Select how to filter the incoming eigenvalue/eigenvector pairs.
 
     Returns:
-        (eigenvalues, eigenvectors): a tuple containing an array of filtered eigenvalues, and their corresponding eigenvectors.
+        (eigenvalues, eigenvectors):
+            a tuple containing an array of filtered eigenvalues, and their 
+            corresponding eigenvectors.
     """
     # Separate eigenvectors into primitive variables
     res = len(r)
-    rho_eigenvectors = np.copy(ur[0*res:1*res,:])
-    u_eigenvectors   = np.copy(ur[1*res:2*res,:])
-    v_eigenvectors   = np.copy(ur[2*res:3*res,:])
-    w_eigenvectors   = np.copy(ur[3*res:4*res,:])
-    p_eigenvectors   = np.copy(ur[4*res:5*res,:])
+    # rho_eigenvectors = np.copy(ur[0*res:1*res,:])
+    # u_eigenvectors   = np.copy(ur[1*res:2*res,:])
+    # v_eigenvectors   = np.copy(ur[2*res:3*res,:])
+    # w_eigenvectors   = np.copy(ur[3*res:4*res,:])
+    p_eigenvectors = np.copy(ur[4*res:5*res, :])
 
     if (filters == 'acoustic'):
         # Here, we work with the pressure component of the eigenvectors
@@ -87,13 +96,13 @@ def physical(eigenvalues,ul,ur,r,alpha_cutoff=0.00001,filters='acoustic'):
         #   phi = atan2(Im{p'},Re{p'})
         #
         # Now, rotate the original vector so it is strictly real-valued so that
-        # the sorting algorithm can just look at the real part of the eigenvector 
-        # and doesn't accidentally see something that is zero, but just happened
-        # to be at the wrong phase so all the energy was in the imaginary part.
-        phi = np.arctan2(p_eigenvectors[5,:].imag, p_eigenvectors[5,:].real)
+        # the sorting algorithm can just look at the real part of the 
+        # eigenvector and doesn't accidentally see something that is zero, but 
+        # just happened to be at the wrong phase so all the energy was in the 
+        # imaginary part.
+        phi = np.arctan2(p_eigenvectors[5, :].imag, p_eigenvectors[5, :].real)
         for i in range(p_eigenvectors.shape[1]):
-            p_eigenvectors[:,i] = p_eigenvectors[:,i]*np.exp(-1j*phi[i])
-
+            p_eigenvectors[:, i] = p_eigenvectors[:, i]*np.exp(-1j*phi[i])
 
         # Just handling the real part now.
         pr_eigenvectors   = np.copy(np.real(p_eigenvectors))
@@ -101,23 +110,23 @@ def physical(eigenvalues,ul,ur,r,alpha_cutoff=0.00001,filters='acoustic'):
 
         # Call filter for each eigenvector
         for i in range(pr_eigenvectors.shape[1]):
-            pr_eigenvectors_f[:,i] = drp15(pr_eigenvectors[:,i])
+            pr_eigenvectors_f[:, i] = drp15(pr_eigenvectors[:, i])
 
         # Select low-wavenumber modes based on the ratio of their vector norms
         amp   = np.zeros(pr_eigenvectors.shape[1])
         amp_f = np.zeros(pr_eigenvectors.shape[1])
         for i in range(pr_eigenvectors.shape[1]):
             for j in range(len(r)-1):
-                amp[i]   = amp[i]   + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors[  j,i]*pr_eigenvectors[  j,i]  +  r[j+1]*pr_eigenvectors[  j+1,i]*pr_eigenvectors[  j+1,i])
-                amp_f[i] = amp_f[i] + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors_f[j,i]*pr_eigenvectors_f[j,i]  +  r[j+1]*pr_eigenvectors_f[j+1,i]*pr_eigenvectors_f[j+1,i])
+                amp[i]   = amp[i]   + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors[j,i]*pr_eigenvectors[j,i]      +  r[j+1]*pr_eigenvectors[j+1,i]*pr_eigenvectors[j+1,i])   # noqa
+                amp_f[i] = amp_f[i] + 0.5*(r[j+1]-r[j])*(r[j]*pr_eigenvectors_f[j,i]*pr_eigenvectors_f[j,i]  +  r[j+1]*pr_eigenvectors_f[j+1,i]*pr_eigenvectors_f[j+1,i])   # noqa
 
         # Evaluate wavenumber selection criteria: alpha
         alpha = np.zeros(len(amp))
         for i in range(len(amp)):
             if (amp[i] < np.finfo(float).eps):
                 # Handle case where initial amplitude for pressure was zero. 
-                # We aren't interested in those modes for acoustics so we set their metric to 
-                # very large, effectively filtering them out.
+                # We aren't interested in those modes for acoustics so we set 
+                # their metric to very large, effectively filtering them out.
                 alpha[i] = np.finfo(float).max
             else:
                 alpha[i] = amp_f[i]/amp[i]
@@ -128,33 +137,32 @@ def physical(eigenvalues,ul,ur,r,alpha_cutoff=0.00001,filters='acoustic'):
         for i in range(len(amp)):
             largest = np.argpartition(amp, -2*res)[-2*res:]
 
-
         # Flag eigenvectors that satisfy criteria: 
         #   1: Wavenumber filter criteria: alpha < alpha_cutoff.
         #   2: Pressure magnitude criteria, only 2*res largest are kept.
         keep = []
         for i in range(len(alpha)):
             if (np.abs(alpha[i]) < alpha_cutoff) and (i in largest):
-                # Store as structured array so we can sort the entire system by alpha
-                tmp = np.array([(i,alpha[i])],dtype=[('index',np.int),('alpha',np.float)])
+                # Store as structured array so we can sort the 
+                # entire system by alpha
+                tmp = np.array([(i, alpha[i])],
+                               dtype=[('index', np.int), ('alpha', np.float)])
                 if (len(keep) == 0):
                     keep = tmp
                 else:
-                    keep = np.append(keep,tmp, axis=0)
-        
+                    keep = np.append(keep, tmp, axis=0)
+
         # Sort eigenmodes and indices being kept by 'alpha'
-        keep = np.sort(keep,order='alpha')
+        keep = np.sort(keep, order='alpha')
 
         # Collect eigenvalues/eigenvectors flagged to pass the filter
         nmodes = keep.shape[0]
-        eigenvalues_f = np.zeros([nmodes],       dtype=np.complex)
-        ul_f          = np.zeros([5*res,nmodes], dtype=np.complex)
-        ur_f          = np.zeros([5*res,nmodes], dtype=np.complex)
+        eigenvalues_f = np.zeros([nmodes], dtype=np.complex)
+        ul_f = np.zeros([5*res, nmodes], dtype=np.complex)
+        ur_f = np.zeros([5*res, nmodes], dtype=np.complex)
         for i in range(nmodes):
             eigenvalues_f[i] = np.copy(eigenvalues[keep['index'][i]])
-            ur_f[:,i]        = np.copy(ur[:,keep['index'][i]])
-            ul_f[:,i]        = np.copy(ul[:,keep['index'][i]])
+            ur_f[:, i] = np.copy(ur[:, keep['index'][i]])
+            ul_f[:, i] = np.copy(ul[:, keep['index'][i]])
 
         return eigenvalues_f, ul_f, ur_f
-        
-
