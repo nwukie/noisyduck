@@ -11,13 +11,9 @@ deploy:
   user: nwukie
 install: pip install -U tox-travis
 language: python
-#python:
-#- 3.5
-#- 3.4
-#- 3.3
-#- 2.7
-#- 2.6
 python:
+- 3.6
 - 3.5
+- 3.4
 - 2.7
 script: tox
