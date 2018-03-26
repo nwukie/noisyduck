@@ -64,3 +64,6 @@ target/
 
 # Text editor
 *.swp
+
+# jupyter checkpoints
+.ipynb_checkpoints
