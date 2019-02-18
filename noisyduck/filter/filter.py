@@ -5,8 +5,8 @@ import numpy as np
 def drp15(f):
     """ 15-point DRP filter from "Computational Aeroacoustics", Tam. Strongly
     filters low-wavenumber components of a signal. End points are handled by
-    creating an artificial reflection of the origin signal about the end 
-    points. In this way, the central filter has 'ghost' information past the 
+    creating an artificial reflection of the origin signal about the end
+    points. In this way, the central filter has 'ghost' information past the
     end points that it needs to construct the filter.
 
     Args:
@@ -32,7 +32,7 @@ def drp15(f):
     dm6 = 1.1117554451990776e-3
     dp7 = -9.0091603462069583e-5
     dm7 = -9.0091603462069583e-5
-    coeffs = [dm7, dm6, dm5, dm4, dm3, dm2, dm1, d0, 
+    coeffs = [dm7, dm6, dm5, dm4, dm3, dm2, dm1, d0,
               dp1, dp2, dp3, dp4, dp5, dp6, dp7]
 
     # Create storage for result
@@ -56,9 +56,9 @@ def physical(eigenvalues, ul, ur, r, alpha_cutoff=0.00001, filters='acoustic'):
     wave, an upstream/downstream traveling acoustic wave, or a spurious mode.
 
     References:
-    [1] Maldonado, A.L.P., Astley, R. J., Coupland, J., Gabard, G., and 
-        Sutliff, D., "Sound Propagation in Lined Annular Ducts with Mean 
-        Swirling Flow" 21st AIAA/CEAS Aeroacoustics Conference, June 2015. 
+    [1] Maldonado, A.L.P., Astley, R. J., Coupland, J., Gabard, G., and
+        Sutliff, D., "Sound Propagation in Lined Annular Ducts with Mean
+        Swirling Flow" 21st AIAA/CEAS Aeroacoustics Conference, June 2015.
         AIAA 2015-2522.
 
     Args:
@@ -69,15 +69,15 @@ def physical(eigenvalues, ul, ur, r, alpha_cutoff=0.00001, filters='acoustic'):
                       [len(r)*nfields,len(eigenvalues)].
         r (float): Array of radial coordinate locations where the eigenvectors
                    have been evaluated at.
-        alpha_cutoff (float, optional): 
+        alpha_cutoff (float, optional):
             A cutoff criteria for filtering. Higher alpha will include higher
             wavenumber modes.
-        filters (string, optional): 
+        filters (string, optional):
             Select how to filter the incoming eigenvalue/eigenvector pairs.
 
     Returns:
         (eigenvalues, eigenvectors):
-            a tuple containing an array of filtered eigenvalues, and their 
+            a tuple containing an array of filtered eigenvalues, and their
             corresponding eigenvectors.
     """
     # Separate eigenvectors into primitive variables
@@ -96,9 +96,9 @@ def physical(eigenvalues, ul, ur, r, alpha_cutoff=0.00001, filters='acoustic'):
         #   phi = atan2(Im{p'},Re{p'})
         #
         # Now, rotate the original vector so it is strictly real-valued so that
-        # the sorting algorithm can just look at the real part of the 
-        # eigenvector and doesn't accidentally see something that is zero, but 
-        # just happened to be at the wrong phase so all the energy was in the 
+        # the sorting algorithm can just look at the real part of the
+        # eigenvector and doesn't accidentally see something that is zero, but
+        # just happened to be at the wrong phase so all the energy was in the
         # imaginary part.
         phi = np.arctan2(p_eigenvectors[5, :].imag, p_eigenvectors[5, :].real)
         for i in range(p_eigenvectors.shape[1]):
@@ -124,8 +124,8 @@ def physical(eigenvalues, ul, ur, r, alpha_cutoff=0.00001, filters='acoustic'):
         alpha = np.zeros(len(amp))
         for i in range(len(amp)):
             if (amp[i] < np.finfo(float).eps):
-                # Handle case where initial amplitude for pressure was zero. 
-                # We aren't interested in those modes for acoustics so we set 
+                # Handle case where initial amplitude for pressure was zero.
+                # We aren't interested in those modes for acoustics so we set
                 # their metric to very large, effectively filtering them out.
                 alpha[i] = np.finfo(float).max
             else:
@@ -137,13 +137,13 @@ def physical(eigenvalues, ul, ur, r, alpha_cutoff=0.00001, filters='acoustic'):
         for i in range(len(amp)):
             largest = np.argpartition(amp, -2*res)[-2*res:]
 
-        # Flag eigenvectors that satisfy criteria: 
+        # Flag eigenvectors that satisfy criteria:
         #   1: Wavenumber filter criteria: alpha < alpha_cutoff.
         #   2: Pressure magnitude criteria, only 2*res largest are kept.
         keep = []
         for i in range(len(alpha)):
             if (np.abs(alpha[i]) < alpha_cutoff) and (i in largest):
-                # Store as structured array so we can sort the 
+                # Store as structured array so we can sort the
                 # entire system by alpha
                 tmp = np.array([(i, alpha[i])],
                                dtype=[('index', np.int), ('alpha', np.float)])

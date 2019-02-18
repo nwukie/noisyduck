@@ -98,11 +98,11 @@ def decomposition(omega, m, r, rho, vr, vt, vz, p, gam,
     # Construct eigensystem
     if (equation == 'general'):
         M, N = construct_numerical_eigensystem_general(
-                omega, m, r, rho, vr, vt, vz, p, gam, perturb_omega)
+            omega, m, r, rho, vr, vt, vz, p, gam, perturb_omega)
 
     elif (equation == 'radial equilibrium'):
         M, N = construct_numerical_eigensystem_radial_equilibrium(
-                omega, m, r, rho, vr, vt, vz, p, gam, perturb_omega)
+            omega, m, r, rho, vr, vt, vz, p, gam, perturb_omega)
 
     # Solve Standard Eigenvalue Problem for complex, nonhermitian system
     evals, evecs_l, evecs_r = scipy.linalg.eig(np.matmul(np.linalg.inv(N), M),
@@ -111,7 +111,7 @@ def decomposition(omega, m, r, rho, vr, vt, vz, p, gam,
                                                overwrite_a=True,
                                                overwrite_b=True)
 
-    # Add radial velocity end points back where they were removed due to 
+    # Add radial velocity end points back where they were removed due to
     # boundary conditions
     evecs_r = np.insert(evecs_r, [res], [0.], axis=0)
     evecs_l = np.insert(evecs_l, [res], [0.], axis=0)
@@ -145,10 +145,10 @@ def construct_numerical_eigensystem_general(
     That is: :math:`\omega = \omega - 10^{-5}\omega j`.
     See Moinier and Giles[2].
 
-    [1] Kousen, K. A., "Eigenmodes of Ducted Flows With Radially-Dependent 
+    [1] Kousen, K. A., "Eigenmodes of Ducted Flows With Radially-Dependent
         Axial and Swirl Velocity Components", NASA/CR 1999-208881, March 1999.
-    [2] Moinier, P., and Giles, M. B., "Eigenmode Analysis for Turbomachinery 
-        Applications", Journal of Propulsion and Power, Vol. 21, No. 6, 
+    [2] Moinier, P., and Giles, M. B., "Eigenmode Analysis for Turbomachinery
+        Applications", Journal of Propulsion and Power, Vol. 21, No. 6,
         November-December 2005.
 
     Args:
@@ -186,7 +186,7 @@ def construct_numerical_eigensystem_general(
     nfields = 5
     dof = res*nfields
 
-    # Check if input mean quantities are scalar. 
+    # Check if input mean quantities are scalar.
     # If so, expand them to a vector
     if (type(rho) is float):
         rho = np.full(res, rho)
@@ -204,26 +204,26 @@ def construct_numerical_eigensystem_general(
     N = np.zeros([dof, dof], dtype=np.complex)
 
     # Submatrices for discretization
-    stencil     = np.zeros([res, res])
-    identity    = np.zeros([res, res])
-    ridentity   = np.zeros([res, res])
+    stencil   = np.zeros([res, res])
+    identity  = np.zeros([res, res])
+    ridentity = np.zeros([res, res])
 
     # Construct fourth-order finite difference stencil
     #
     # Stencil operations
     #
-    #   stencil*f 
-    #       => d(f u')/dr   
-    #       => returns matrix operator, L corresponding to 
+    #   stencil*f
+    #       => d(f u')/dr
+    #       => returns matrix operator, L corresponding to
     #          d(f*u')/dr, where Lu' = d(f*u')/dr
     #
-    #   np.matmul(stencil,f) 
-    #       => d(f)/dr      
+    #   np.matmul(stencil,f)
+    #       => d(f)/dr
     #       => returns vector of evaluated derivatives, d(f)/dr
     #
-    #   np.matmul(identity*f,stencil) 
-    #       => f d(u')/dr    
-    #       => returns matrix operator, L corresponding to 
+    #   np.matmul(identity*f,stencil)
+    #       => f d(u')/dr
+    #       => returns matrix operator, L corresponding to
     #          (f d()/dr), where Lu' = f*d(u')/dr
     #
     stencil[0, 0:5] = [-25., 48., -36, 16., -3.]
@@ -262,12 +262,12 @@ def construct_numerical_eigensystem_general(
     irs = 0 + res*(irow-1)
     ics = 0 + res*(icol-1)
     M[irs:irs + res, ics:ics + res] += (
-         1j*identity*romega +                       # temporal source(real)
-         (-identity*iomega) +                       # temporal source(imag)
-         np.matmul(identity*vr, stencil) +          # bar{B} radial
-         identity*dvr_dr +                          # tilde{B}
-         1j*ridentity*float(m)*vt +                 # bar{C} circum. source
-         ridentity*vr)                              # bar{D} 
+        1j*identity*romega +                       # temporal source(real)
+        (-identity*iomega) +                       # temporal source(imag)
+        np.matmul(identity*vr, stencil) +          # bar{B} radial
+        identity*dvr_dr +                          # tilde{B}
+        1j*ridentity*float(m)*vt +                 # bar{C} circum. source
+        ridentity*vr)                              # bar{D}
 
     N[irs:irs + res, ics:ics + res] += 1j*identity*vz   # axial source
 
@@ -432,7 +432,7 @@ def construct_numerical_eigensystem_general(
     irs = 0 + res*(irow-1)
     ics = 0 + res*(icol-1)
     # bar{B} radial derivative
-    M[irs:irs + res, ics:ics + res] += np.matmul(identity*(1./rho), stencil) 
+    M[irs:irs + res, ics:ics + res] += np.matmul(identity*(1./rho), stencil)
 
     # Block 3,5
     irow = 3
@@ -449,8 +449,8 @@ def construct_numerical_eigensystem_general(
     ics = 0 + res*(icol-1)
     N[irs:irs + res, ics:ics + res] += 1j*identity/rho  # bar{A} axial source
 
-    # Remove rows/columns due to solid wall boundary condition: no velocity 
-    # normal to boundary, assumes here wall normal vector is aligned with 
+    # Remove rows/columns due to solid wall boundary condition: no velocity
+    # normal to boundary, assumes here wall normal vector is aligned with
     # radial coordinate.
     M = np.delete(M, (res, 2*res-1), axis=0)
     M = np.delete(M, (res, 2*res-1), axis=1)
@@ -506,8 +506,7 @@ def construct_numerical_eigensystem_radial_equilibrium(
     Returns:
         (M, N): left-hand side of generalized eigenvalue problem, right-hand 
                 side of generalized eigenvalue problem.
-    """
-
+    """ # noqa
     # Define real/imag parts for temporal frequency
     romega = omega
     if (perturb_omega):
@@ -523,7 +522,7 @@ def construct_numerical_eigensystem_radial_equilibrium(
     nfields = 5
     dof = res*nfields
 
-    # Check if input mean quantities are scalar. 
+    # Check if input mean quantities are scalar.
     # If so, expand them to a vector
     if (type(rho) is float):
         rho = np.full(res, rho)
@@ -752,8 +751,8 @@ def construct_numerical_eigensystem_radial_equilibrium(
     ics = 0 + res*(icol-1)
     N[irs:irs + res, ics:ics + res] += 1j*identity/rho  # axial source
 
-    # Remove rows/columns due to solid wall boundary condition: no 
-    # velocity normal to boundary, assumes here wall normal vector 
+    # Remove rows/columns due to solid wall boundary condition: no
+    # velocity normal to boundary, assumes here wall normal vector
     # is aligned with radial coordinate.
     M = np.delete(M, (res, 2*res-1), axis=0)
     M = np.delete(M, (res, 2*res-1), axis=1)

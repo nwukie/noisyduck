@@ -64,9 +64,10 @@ Ready to contribute? Here's how to set up `noisyduck` for local development.
 
     $ git clone git@github.com:your_name_here/noisyduck.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have virtualenv installed, create a new virtual environment (here we assume your virtual environments are located in ~/.virtualenv. You can create this directory if it doesn't already exist.) and activate it. This is how to set up a virtual environment, install noisyduck and start developing::
 
-    $ mkvirtualenv noisyduck
+    $ virtualenv ~/.virtualenv/noisyduck
+    $ source ~/.virtualenv/noisyduck/bin/activate
     $ cd noisyduck/
     $ python setup.py develop
 
@@ -101,14 +102,14 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.6, 2.7, 3.3, 3.4 and 3.5, and for PyPy. Check
+3. The pull request should work for Python 2.7, 3.5, 3.6, and 3.7. Check
    https://travis-ci.org/nwukie/noisyduck/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
 ----
 
-To run a subset of tests::
+To manuall run tests, you can execute py.test in the noisyduck project directory::
 
-$ py.test tests.test_noisyduck
+$ py.test
 
