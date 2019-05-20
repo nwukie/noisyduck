@@ -110,12 +110,6 @@ def decomposition(omega, m, r, rho, vr, vt, vz, p, gam,
                                                overwrite_a=True,
                                                overwrite_b=True)
 
-    # Add radial velocity end points back where they were removed due to
-    # boundary conditions
-    evecs_r = np.insert(evecs_r, [res], [0.], axis=0)
-    evecs_l = np.insert(evecs_l, [res], [0.], axis=0)
-    evecs_r = np.insert(evecs_r, [2*res-1], [0.], axis=0)
-    evecs_l = np.insert(evecs_l, [2*res-1], [0.], axis=0)
 
     # Filtering
     if (filter == 'acoustic'):
@@ -204,6 +198,7 @@ def construct_numerical_eigensystem_general(
     # Allocate storage
     M = np.zeros([dof, dof], dtype=np.complex)
     N = np.zeros([dof, dof], dtype=np.complex)
+    C = np.zeros([dof, dof], dtype=np.complex)
 
     # Submatrices for discretization
     stencil   = np.zeros([res, res])
@@ -269,7 +264,7 @@ def construct_numerical_eigensystem_general(
         np.matmul(identity*vr, stencil) +          # bar{A} radial
         1j*ridentity*float(m)*vt)                  # bar{B} circum. source
 
-    N[irs:irs + res, ics:ics + res] += 1j*identity*vz   # axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*vz   # axial source
 
     # Block 2,2
     irow = 2
@@ -282,7 +277,7 @@ def construct_numerical_eigensystem_general(
         np.matmul(identity*vr, stencil) +           # bar{A} rad derivative
         1j*ridentity*float(m)*vt )                  # bar{B} circ source
 
-    N[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{A} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{C} axial source
 
     # Block 3,3
     irow = 3
@@ -295,7 +290,7 @@ def construct_numerical_eigensystem_general(
         np.matmul(identity*vr, stencil) +           # bar{A} rad derivative
         1j*ridentity*float(m)*vt)                   # bar{B} circ source
 
-    N[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{A} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{C} axial source
 
     # Block 4,4
     irow = 4
@@ -308,7 +303,7 @@ def construct_numerical_eigensystem_general(
         np.matmul(identity*vr, stencil) +           # bar{A} rad derivative
         1j*ridentity*float(m)*vt )                  # bar{B} circ source
 
-    N[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{A} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{C} axial source
 
     # Block 5,5
     irow = 5
@@ -321,7 +316,7 @@ def construct_numerical_eigensystem_general(
         np.matmul(identity*vr, stencil) +           # bar{A} rad derivative
         1j*ridentity*float(m)*vt)                   # bar{C} circ source
 
-    N[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{A} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*vz   # bar{C} axial source
 
     # Block 2,1
     irow = 2
@@ -407,14 +402,14 @@ def construct_numerical_eigensystem_general(
     icol = 4
     irs = 0 + res*(irow-1)
     ics = 0 + res*(icol-1)
-    N[irs:irs + res, ics:ics + res] += 1j*identity*rho  # bar{C} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*rho  # bar{C} axial source
 
     # Block 5,4
     irow = 5
     icol = 4
     irs = 0 + res*(irow-1)
     ics = 0 + res*(icol-1)
-    N[irs:irs + res, ics:ics + res] += 1j*identity*gam*p  # bar{C} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity*gam*p  # bar{C} axial source
 
     # Block 2,5
     irow = 2
@@ -435,19 +430,52 @@ def construct_numerical_eigensystem_general(
     icol = 5
     irs = 0 + res*(irow-1)
     ics = 0 + res*(icol-1)
-    N[irs:irs + res, ics:ics + res] += 1j*identity/rho  # bar{C} axial source
+    C[irs:irs + res, ics:ics + res] += 1j*identity/rho  # bar{C} axial source
 
-    # Remove rows/columns due to solid wall boundary condition: no velocity
-    # normal to boundary, assumes here wall normal vector is aligned with
-    # radial coordinate.
-    M = np.delete(M, (res, 2*res-1), axis=0)
-    M = np.delete(M, (res, 2*res-1), axis=1)
 
-    N = np.delete(N, (res, 2*res-1), axis=0)
-    N = np.delete(N, (res, 2*res-1), axis=1)
 
-    # Move N to right-hand side
-    N = np.copy(-N)
+    # Hard-wall boundary condition
+    #---------------------------------
+
+    # First, clear contributions from the interior discretization
+    # on the radial velocity at end-points.
+    M[res,:]     = 0.
+    M[2*res-1,:] = 0.
+
+    C[res,:]     = 0.
+    C[2*res-1,:] = 0.
+
+    #   Now, in the mathematical formula, for a dirichlet boundary
+    #   condition we will have:
+    #
+    #   ([M] * vr)  + (k * [C] * vr) = 0
+    #
+    #   Where [M] and [C] here are just the diagonal entries that correspond to
+    #   the radial velocity end-points. So, what values do the diagonal entries 
+    #   in [M] and [C] need to take to enforce (vr = 0)?
+    #
+    #   Let's try [M] = 1, [C] = 1
+    #
+    #   vr = -k vr
+    #
+    #   This only holds if 
+    #       1: k = 0, which is the trivial solution we are not interested in.
+    #       2: vr = 0, which must be true for all other permissible solutions!
+    #
+    #M[res,res] = 1.
+    #M[2*res-1,2*res-1] = 1.
+
+    C[res,res] = 1.
+    C[2*res-1,2*res-1] = 1.
+
+
+
+
+
+
+
+    # Move C to right-hand side
+    N = np.copy(-C)
 
     return M, N
 
